@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import Image from "next/image";
 import { motion, useScroll, useMotionValueEvent, AnimatePresence } from "framer-motion";
 import { Menu, X, ArrowRight, Zap } from "lucide-react";
 import { ModeToggle } from "@/components/ui/ModeToggle";
@@ -43,12 +44,13 @@ const Navbar = () => {
         >
           {/* LEFT: LOGO */}
           <div className="flex items-center gap-3 group cursor-pointer">
-            <motion.div 
-              whileHover={{ rotate: -12, scale: 1.1 }}
-              className="w-10 h-10 bg-red-600 rounded-lg skew-x-[-12deg] flex items-center justify-center font-black italic text-white text-2xl shadow-[0_0_20px_rgba(238,0,0,0.4)]"
-            >
-              W
-            </motion.div>
+              <Image
+                src="/logo.png"
+                alt="Web Gym Logo"
+                width={50}
+                height={50}
+                className="  font-black italic text-white text-xl"
+              />
             <div className="flex flex-col leading-none">
               <span className="text-xl font-black tracking-tighter text-zinc-900 dark:text-white uppercase italic">
                 WEB <span className="text-red-600">GYM</span>
@@ -58,7 +60,7 @@ const Navbar = () => {
           </div>
 
           {/* CENTER: DESKTOP NAV */}
-          <div className="hidden md:flex items-center gap-1 p-1 bg-zinc-100/50 dark:bg-white/5 rounded-xl border border-zinc-200/50 dark:border-white/5 backdrop-blur-md">
+          <div className="hidden md:flex  md:ml-25 items-center gap-1 p-1 bg-zinc-100/50 dark:bg-white/5 rounded-xl border border-zinc-200/50 dark:border-white/5 backdrop-blur-md">
             {navLinks.map((link) => (
               <a
                 key={link.name}
