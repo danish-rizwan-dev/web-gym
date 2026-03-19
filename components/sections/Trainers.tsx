@@ -23,7 +23,7 @@ const coaches = [
     role: "Owner & Fitness Consultant", 
     img: "/asif.jpeg", 
     awards: "Master Trainer",
-    ig: "https://www.instagram.com/webgym_official" // Update with actual IG
+    ig: "https://www.instagram.com/liger_8889" // Update with actual IG
   }
 ];
 
