@@ -1,43 +1,60 @@
 "use client";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Play, X, Maximize2, Zap } from "lucide-react";
+import { X, Maximize2, ChevronLeft, ChevronRight } from "lucide-react";
 
-const vaultItems = [
-  { 
-    id: 0, 
-    type: "image",
-    url: "https://images.unsplash.com/photo-1540497077202-7c8a3999166f?q=80&w=1200", 
-    size: "md:col-span-2 md:row-span-2", 
-  },
-  { 
-    id: 1, 
-    type: "video_trigger", 
-    // This is the preview image for the video
-    url: "/logo.png",
-    videoUrl: "https://www.youtube.com/embed/N2ly2oxEFsE?autoplay=1",
-    size: "md:col-span-1 md:row-span-1",
-  },
-  { 
-    id: 2, 
-    type: "image",
-    url: "https://images.unsplash.com/photo-1571902943202-507ec2618e8f?q=80&w=800", 
-    size: "md:col-span-1 md:row-span-1", 
-  },
-  { 
-    id: 3, 
-    type: "image",
-    url: "https://images.unsplash.com/photo-1593079831268-3381b0db4a77?q=80&w=1200", 
-    size: "md:col-span-2 md:row-span-1", 
-  },
-];
+const totalImages = 19;
+
+// This logic organizes images into "Columns" for the two-row effect
+const generateBentoGroups = () => {
+  const groups = [];
+  for (let i = 1; i <= totalImages; i++) {
+    // Every 3rd column will be a "Large" single-image column
+    if (i % 3 === 0) {
+      groups.push({
+        id: `group-${i}`,
+        type: "large",
+        images: [`/GymPics/1 (${i}).jpeg`],
+      });
+    } else {
+      // Other columns stack two images vertically
+      if (i + 1 <= totalImages) {
+        groups.push({
+          id: `group-${i}`,
+          type: "stacked",
+          images: [`/GymPics/1 (${i}).jpeg`, `/GymPics/1 (${i + 1}).jpeg`],
+        });
+        i++; // Skip next because we used it in the stack
+      } else {
+        groups.push({
+          id: `group-${i}`,
+          type: "large",
+          images: [`/GymPics/1 (${i}).jpeg`],
+        });
+      }
+    }
+  }
+  return groups;
+};
+
+const bentoGroups = generateBentoGroups();
 
 export default function Gallery() {
-  const [activeItem, setActiveItem] = useState<typeof vaultItems[0] | null>(null);
+  const [activeUrl, setActiveUrl] = useState<string | null>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+
+  const scroll = (direction: "left" | "right") => {
+    if (scrollRef.current) {
+      const { scrollLeft, clientWidth } = scrollRef.current;
+      // Scrolls by one full view-width for that "page turn" feel
+      const scrollTo = direction === "left" ? scrollLeft - clientWidth : scrollLeft + clientWidth;
+      scrollRef.current.scrollTo({ left: scrollTo, behavior: "smooth" });
+    }
+  };
 
   return (
-    <section id="vault" className="py-24 bg-white dark:bg-[#050505] px-6 transition-colors duration-500 overflow-hidden">
-      <div className="max-w-7xl mx-auto">
+    <section id="vault" className="py-24 bg-white dark:bg-[#050505] transition-colors duration-500 overflow-hidden">
+      <div className="max-w-7xl mx-auto px-6">
         
         {/* Header */}
         <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
@@ -50,104 +67,91 @@ export default function Gallery() {
               THE <span className="text-red-600">VAULT</span>
             </h2>
           </div>
-          <p className="text-zinc-500 dark:text-zinc-400 max-w-xs text-sm font-bold uppercase leading-relaxed italic">
-            Witness the intensity. World-class gear meets raw human performance.
-          </p>
+          
+          {/* Slider Controls */}
+          <div className="flex gap-4">
+            <button 
+              onClick={() => scroll("left")}
+              className="p-4 rounded-full border border-zinc-200 dark:border-white/10 hover:bg-red-600 hover:text-white transition-all active:scale-90"
+            >
+              <ChevronLeft size={24} />
+            </button>
+            <button 
+              onClick={() => scroll("right")}
+              className="p-4 rounded-full border border-zinc-200 dark:border-white/10 hover:bg-red-600 hover:text-white transition-all active:scale-90"
+            >
+              <ChevronRight size={24} />
+            </button>
+          </div>
         </div>
 
-        {/* Bento Collage Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-4 md:grid-rows-2 gap-4 h-auto md:h-[700px]">
-          {vaultItems.map((item) => (
-            <motion.div
-              key={item.id}
-              initial={{ opacity: 0, y: 20 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: true }}
-              className={`${item.size} relative rounded-[2.5rem] overflow-hidden group border border-zinc-200 dark:border-white/5 bg-zinc-900`}
+        {/* Horizontal Collage Container */}
+        <div 
+          ref={scrollRef}
+          className="flex gap-4 overflow-x-auto pb-12 snap-x snap-mandatory no-scrollbar"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {bentoGroups.map((group) => (
+            <div 
+              key={group.id} 
+              className={`flex-shrink-0 snap-start ${group.type === 'large' ? 'w-[450px]' : 'w-[300px]'} h-[600px] flex flex-col gap-4`}
             >
-              <img 
-                src={item.url} 
-                className="w-full h-full object-cover transition-all duration-1000  group-hover:grayscale-0 group-hover:scale-105"
-                alt="Vault Content" 
-              />
-
-              {item.type === "video_trigger" ? (
-                /* TRANSLUCENT VIDEO TRIGGER */
-                <div 
-                  className="absolute inset-0 flex items-center justify-center cursor-pointer bg-black/40 group-hover:bg-black/20 transition-colors"
-                  onClick={() => setActiveItem(item)}
+              {group.images.map((imgUrl, idx) => (
+                <motion.div
+                  key={idx}
+                  className={`relative rounded-[2rem] overflow-hidden group bg-zinc-900 border border-white/5 ${group.type === 'large' ? 'h-full' : 'h-1/2'}`}
+                  initial={{ opacity: 0, y: 20 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
                 >
-                  <motion.div 
-                    animate={{ scale: [1, 1.1, 1] }}
-                    transition={{ repeat: Infinity, duration: 2 }}
-                    className="absolute w-24 h-24 bg-red-600/20 rounded-full blur-2xl"
+                  <img 
+                    src={imgUrl} 
+                    className="w-full h-full object-cover transition-all duration-700 group-hover:scale-110 group-hover:rotate-1"
+                    alt="Gym" 
                   />
-                  <motion.div 
-                    whileHover={{ scale: 1.1 }}
-                    className="relative w-20 h-20 bg-white/10 backdrop-blur-md border border-white/20 rounded-full flex items-center justify-center text-white shadow-2xl transition-all group-hover:bg-red-600 group-hover:border-red-600"
-                  >
-                    <Play size={28} fill="currentColor" className="ml-1" />
-                  </motion.div>
-                </div>
-              ) : (
-                /* IMAGE TRIGGER */
-                <div className="absolute inset-0 flex items-end justify-end p-8 pointer-events-none">
-                  <button 
-                    onClick={() => setActiveItem(item)}
-                    className="w-14 h-14 bg-white/10 backdrop-blur-xl border border-white/20 text-white rounded-2xl flex items-center justify-center shadow-2xl opacity-0 group-hover:opacity-100 translate-y-4 group-hover:translate-y-0 transition-all duration-500 pointer-events-auto hover:bg-red-600 hover:border-red-600"
-                  >
-                    <Maximize2 size={22} />
-                  </button>
-                </div>
-              )}
-            </motion.div>
+                  
+                  {/* Overlay Trigger */}
+                  <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <button 
+                      onClick={() => setActiveUrl(imgUrl)}
+                      className="p-4 bg-red-600 text-white rounded-full scale-50 group-hover:scale-100 transition-transform duration-500 shadow-xl"
+                    >
+                      <Maximize2 size={24} />
+                    </button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
           ))}
         </div>
       </div>
 
       {/* Lightbox Modal */}
       <AnimatePresence>
-        {activeItem && (
+        {activeUrl && (
           <motion.div 
             initial={{ opacity: 0 }} 
             animate={{ opacity: 1 }} 
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[500] bg-black/95 backdrop-blur-2xl flex items-center justify-center p-4 md:p-12"
+            className="fixed inset-0 z-[500] bg-black/95 backdrop-blur-xl flex items-center justify-center p-4"
+            onClick={() => setActiveUrl(null)}
           >
-            <button 
-              onClick={() => setActiveItem(null)} 
-              className="absolute top-8 right-8 text-white/50 hover:text-red-600 transition-colors z-[510] p-2"
-            >
+            <button className="absolute top-8 right-8 text-white/50 hover:text-red-600 transition-colors">
               <X size={40} />
             </button>
-
-            <motion.div 
-              initial={{ scale: 0.9, opacity: 0 }}
+            <motion.img 
+              initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="relative w-full max-w-5xl overflow-hidden rounded-[2rem] border border-white/10 shadow-[0_0_100px_rgba(238,0,0,0.3)] bg-black"
-            >
-              {activeItem.type === "video_trigger" ? (
-                <div className="aspect-[9/16] md:aspect-video w-full max-h-[85vh] mx-auto">
-                  <iframe 
-                    className="w-full h-full"
-                    src={activeItem.videoUrl}
-                    title="WEB GYM Arena"
-                    allow="autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" 
-                    allowFullScreen
-                  />
-                </div>
-              ) : (
-                <img 
-                  src={activeItem.url} 
-                  className="w-full h-auto max-h-[85vh] object-contain mx-auto" 
-                  alt="Expanded Vault" 
-                />
-              )}
-            </motion.div>
+              src={activeUrl} 
+              className="max-w-full max-h-[90vh] object-contain rounded-2xl border border-white/10 shadow-2xl"
+            />
           </motion.div>
         )}
       </AnimatePresence>
+
+      <style jsx global>{`
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+      `}</style>
     </section>
   );
 }
